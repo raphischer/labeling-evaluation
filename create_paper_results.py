@@ -1,3 +1,6 @@
+import os
+import time
+
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -92,28 +95,68 @@ def generate_qtree_code(node):
     sub_freq = '' if node["sub_frequency"] == 0 else f'+{node["sub_frequency"]}'
     node_label = f'{{{node["name"]} ({node["frequency"]}{sub_freq})}}'
     if len(node["children"]) < 2:
+        node_label = f'{{{node["name"]} ({node["frequency"]+node["sub_frequency"]})}}'
         return f"[.{node_label} ]"
     else:
         children_code = " ".join(generate_qtree_code(child) for child in node["children"].values())
         return f"[.{node_label} {children_code} ]"
+    
 
+fam_quotes = { 
+    'General Codes': ("To use AI [\dots] to counter the shortage of skilled workers", 'I14, p. 4'),
+    'Types of Daily Work': ("develop an app to detect tolerable products in the supermarket", 'I10, p. 4'),
+    'AI Use Cases': ("monitoring the machine condition such that we can make predictions", 'I14, p. 4'),
+    'ML Methods': ("the AI evaluates whether the typed text contains specific data", 'I3, p. 44'),
+    'ML Tools & Brands': ("I used scikit-learn models and also worked with TensorFlow", 'I13, p. 4'),
+    'Requirements on AI': ("My boss doesn't care much about the process, he wants results", 'I13, p. 160'),
+    'Benefits': ("Your label hhelps me to decide immediately, it saves a lot of time", 'I9, p. 219'),
+    'Limitations': ("I don't get how the value is included in the overall scoring", 'I16, p. 58'),
+    'Property Importance': ("the primary objectives: reducing time and enhancing accuracy", 'I7, p. 98'),
+    'Associations': ("like I'm looking for a washing machine at the DIY store", 'I3, p. 84'),
+    'Target Audience': ("the addressees are likely to be people who are intensively involved", 'I14, p. 64'),
+    'Workflows and Use': ("different agendas and newsletters as a regular source of information", 'I16, p. 70'),
+    'General Comparison': ("It is time-consuming -- that is the disadvantage of other approaches", 'I9, p. 219'),
+    'Reasons for Trust': ("if it has a university stamp on it, it seems more trustworthy", 'I11, p. 144'),
+    'Who Needs Trust': ("it helps to understand how the model works if you are a developer", 'I13, p. 20'),
+    'Dimensions of Trust': ("trust in AI, or trust in a label -- these are two different things", 'I11, p. 152')
+}
+
+
+PLOT_WIDTH = 900
+PLOT_HEIGHT = PLOT_WIDTH // 4
+
+print('Generating figures')
+####### DUMMY OUTPUT #######
+# for setting up pdf export of plotly
+fig=px.scatter(x=[0, 1, 2], y=[0, 1, 4])
+fig.write_image("dummy.pdf")
+time.sleep(0.5)
+os.remove("dummy.pdf")
 
 discard = ['ANON', 'Katha dky', 'Money Quotes']
 excel_dict = build_dict_from_excel('MAXQDA24 project - Codesystem.xlsx', discard)
-tree = build_tree_from_dict(excel_dict)
-tot_num, tot_freqs = str(recursively_walk_tree(tree)), str(tree['frequency'] + tree['sub_frequency'])
-tree_merged = merge_rare(tree)
+TREE = build_tree_from_dict(excel_dict)
+tot_num, tot_freqs = str(recursively_walk_tree(TREE)), str(TREE['frequency'] + TREE['sub_frequency'])
+TREE_MERGED = merge_rare(TREE)
+
+# interviewee overview table
+interviewees = pd.read_csv('interviewees.csv')
+interviewees['id'] = [f'I{idx+1}' for idx in interviewees.index]
+tab_cols = ['Job Title', 'Company Type', 'Employees', 'Gender', 'Age', 'AI Skills']
+table_rows = [' $AND '.join(['ID'] + tab_cols) + r' \\', r'\toprule']
+for idx, row in interviewees[tab_cols].iterrows():
+    values = [f'I{idx+1}'] + row.values.astype(str).tolist()
+    table_rows.append(' $AND '.join(values) + r' \\')
+tab_final = r'\begin{tabular}{lllllll}' + '\n    ' + '\n    '.join(table_rows) + '\n' + r'\end{tabular}'
+with open('paper_results/tab_interviewees.tex', 'w') as tab:
+    tab.write(tab_final.replace('&', '\&').replace('$AND', '&'))
 
 # generate overview table
-fam_quotes = {
-    'General Codes': ('this is some weird quote', 'I2'),
-    'Exemplary Labels': ('oh look, here is another quote!', 'I5')
-}
-table_rows = [' $AND '.join(['Code Family', 'RQ', '\#Codes', '\#Occ', 'Quote']) + r' \\', r'\toprule']
-for fam, fam_codes in tree['children'].items():
+table_rows = [' $AND '.join(['Code Family', 'RQ', 'Size', 'Occ', 'Quote']) + r' \\', r'\toprule']
+for fam, fam_codes in TREE['children'].items():
     for code, subtree in fam_codes['children'].items():
         quote = fam_quotes.get(code, ('', 'n.a.'))
-        depth, fmt_quote = str(recursively_walk_tree(subtree)), r'\emph{' + quote[0] + r'}' + f' ({quote[1]})'
+        depth, fmt_quote = str(recursively_walk_tree(subtree)), r'\small \q{' + quote[0] + r'}' + f' ({quote[1].replace(" ", "~")})'
         freq = str(subtree['frequency'] + subtree['sub_frequency'])
         table_rows.append(' $AND '.join([code, fam.split(' ')[0], depth, freq, fmt_quote]) + r' \\')
 table_rows = table_rows + [r'\midrule', ' $AND '.join(['Total', ' ', tot_num, tot_freqs, ' '])]
@@ -122,25 +165,92 @@ with open('paper_results/tab_codesystem_overview.tex', 'w') as tab:
     tab.write(tab_final.replace('&', '\&').replace('$AND', '&'))
 
 # generate code family trees
-for fam, fam_codes in tree_merged['children'].items():
+for fam, fam_codes in TREE_MERGED['children'].items():
     for code, subtree in fam_codes['children'].items(): 
         tikz_code = '\n'.join([
-            r'\begin{tikzpicture}[grow=right,level distance=200pt,scale=1,transform shape]',
+            r'\begin{tikzpicture}[grow=right,level distance=180pt,scale=1,transform shape]',
             r'\Tree ' + generate_qtree_code(subtree).replace('&', r'\&'),
             r'\end{tikzpicture}' ])
         with open(f'paper_results/codes_{fam.split(" ")[0]}_{code.replace(" ", "_")}.tex', 'w') as tf:
             tf.write(tikz_code)
 
-data = pd.read_csv('interviewees.csv')
+def find_tree(tree, code):
+    if tree['name'] == code:
+        return tree
+    for child in tree['children'].values():
+        ret = find_tree(child, code)
+        if ret:
+            return ret
+    return None
 
-tab_cols = ['Job Title', 'Company Type', 'Employees', 'Gender', 'Age', 'AI Skills']
-table_rows = [' $AND '.join(['ID'] + tab_cols) + r' \\', r'\toprule']
-for idx, row in data[tab_cols].iterrows():
-    values = [f'I{idx+1}'] + row.values.astype(str).tolist()
-    table_rows.append(' $AND '.join(values) + r' \\')
-tab_final = r'\begin{tabular}{lllllll}' + '\n    ' + '\n    '.join(table_rows) + '\n' + r'\end{tabular}'
-with open('paper_results/tab_interviewees.tex', 'w') as tab:
-    tab.write(tab_final.replace('&', '\&').replace('$AND', '&'))
+def find_in_tree(tree, code, parent):
+    if tree['name'] == parent and code in tree['children']:
+        return True
+    if len(tree['children']) == 0:
+        return False
+    return any([find_in_tree(child, code, parent) for child in tree['children'].values()])
+
+# Q2 benefits VS limitations
+sentiment_codes = ['Benefits', 'Room for Improvements', 'Limitations']
+sentiment_trees = {code: find_tree(TREE, code) for code in sentiment_codes}
+codes_per_id = pd.read_csv('codes_per_id.csv')
+results = []
+for id, data in codes_per_id.groupby('id'):
+    counts = {code: 0 for code in sentiment_codes}
+    for _, row in data.iterrows():
+        for code, subtree in sentiment_trees.items():
+            if find_in_tree(subtree, row['code'], row['parent']):
+                counts[code] += row['count']
+                break
+    idx = interviewees[interviewees['id'] == id].index[0]
+    for code, count in counts.items():
+        interviewees.loc[idx,code] = count
+fig = go.Figure()
+fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Benefits'], name='Benefits'))
+fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Room for Improvements'] * -1, name='Room for Improvements'))
+fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Limitations'] * -1, name='Limitations'))
+fig.update_layout(barmode='relative', width=PLOT_WIDTH*0.6, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
+                  legend=dict(orientation="h", yanchor="top", y=1.2, xanchor="center", x=0.5),
+                  yaxis={'title': 'Code Occurrences', 'tick0': -20, 'dtick': 5, 'tickformat': '',
+                         'tickvals': [-20, -15, -10, -5, 0, 5, 10, 15, 20], 'ticktext': ['20', "15", '10', "5", '0', "5", '10', "15", '20']})
+fig.show()
+fig.write_image("paper_results/q2_sentiment.pdf")
+
+# Q2 property importance
+codes = {'Energy, Resources & Sustainability': 'Resources', 'Predictive Quality': 'Pred Qual', 'Temporal Performance': 'Temp Perf', 'Consistency & Robustness': 'Robustness'}
+fams = ['Q1 - Who and Why?', 'Q2 - How to Label?']
+prop_importance = {fam: [] for fam in fams}
+for code in codes:
+    for fam in fams:
+        node = find_tree(TREE['children'][fam], code)
+        prop_importance[fam].append( node['frequency'] + node['sub_frequency'] )
+        if 'Q2' in fam:
+            prop_importance[fam][-1] = prop_importance[fam][-1] * -1
+fig = go.Figure()
+fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['Q1 - Who and Why?'], name='generally discussing AI'))
+fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['Q2 - How to Label?'], name='facing labels'))
+fig.update_layout(barmode='relative', width=PLOT_WIDTH*0.4, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
+                  legend=dict(orientation='h', yanchor="top", y=1.2, xanchor="center", x=0.5),
+                  yaxis={'title': 'Code Occurrences', 'tick0': -20, 'dtick': 5, 'tickformat': '',
+                         'tickvals': [-20, -15, -10, -5, 0, 5, 10, 15, 20], 'ticktext': ['20', "15", '10', "5", '0', "5", '10', "15", '20']})
+fig.show()
+fig.write_image("paper_results/q2_prop_importances.pdf")
+
+# Q1 figure
+daily_dicts = {}
+for code in ['General Codes', 'Types of Daily Work', 'ML Methods', 'AI Use Cases', 'ML Tools & Brands', 'Requirements on AI']:
+    daily_dicts[code] = TREE_MERGED['children']['Q1 - Who and Why?']['children'][code]['children']
+fig = make_subplots(rows=2, cols=3, subplot_titles=list(daily_dicts.keys()), horizontal_spacing=0.2, vertical_spacing=0.12)
+for i, (code, dict) in enumerate(daily_dicts.items()):
+    keys = [key[:20] + '..' if len(key) > 20 else key for key in dict.keys()]
+    values = [info['frequency'] + info['sub_frequency'] for info in dict.values()]
+    fig.add_trace(
+        go.Bar(x=values, y=keys, orientation='h', name=code),
+        row=i//3+1, col=i%3+1
+    )
+fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT*2.0, margin={'l': 0, 'r': 0, 'b': 0, 't': 18}, showlegend=False)
+fig.show()
+fig.write_image("paper_results/q1_bars.pdf")
 
 
 
