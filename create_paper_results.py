@@ -102,6 +102,24 @@ def generate_qtree_code(node):
         return f"[.{node_label} {children_code} ]"
     
 
+def find_tree(tree, code):
+    if tree['name'] == code:
+        return tree
+    for child in tree['children'].values():
+        ret = find_tree(child, code)
+        if ret:
+            return ret
+    return None
+
+
+def find_in_tree(tree, code, parent):
+    if tree['name'] == parent and code in tree['children']:
+        return True
+    if len(tree['children']) == 0:
+        return False
+    return any([find_in_tree(child, code, parent) for child in tree['children'].values()])
+    
+
 fam_quotes = { 
     'General Codes': ("To use AI [\dots] to counter the shortage of skilled workers", 'I14, p. 4'),
     'Types of Daily Work': ("develop an app to detect tolerable products in the supermarket", 'I10, p. 4'),
@@ -174,21 +192,13 @@ for fam, fam_codes in TREE_MERGED['children'].items():
         with open(f'paper_results/codes_{fam.split(" ")[0]}_{code.replace(" ", "_")}.tex', 'w') as tf:
             tf.write(tikz_code)
 
-def find_tree(tree, code):
-    if tree['name'] == code:
-        return tree
-    for child in tree['children'].values():
-        ret = find_tree(child, code)
-        if ret:
-            return ret
-    return None
 
-def find_in_tree(tree, code, parent):
-    if tree['name'] == parent and code in tree['children']:
-        return True
-    if len(tree['children']) == 0:
-        return False
-    return any([find_in_tree(child, code, parent) for child in tree['children'].values()])
+# Q3 competitors used
+used = {n.replace('Used: ', ''): c['frequency'] + c['sub_frequency'] for n, c in TREE_MERGED['children']['Q3 - Competitors?']['children']['Workflows and Use']['children'].items() if 'Used' in n or 'Other' in n}
+fig = go.Figure(go.Bar(y=list(used.keys()), x=list(used.values()), orientation='h'))
+fig.update_layout(width=PLOT_WIDTH * 0.5, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0}, showlegend=False)
+fig.show()
+fig.write_image("paper_results/q3_competitors.pdf")
 
 # Q2 benefits VS limitations
 sentiment_codes = ['Benefits', 'Room for Improvements', 'Limitations']
