@@ -192,11 +192,23 @@ for fam, fam_codes in TREE_MERGED['children'].items():
         with open(f'paper_results/codes_{fam.split(" ")[0]}_{code.replace(" ", "_")}.tex', 'w') as tf:
             tf.write(tikz_code)
 
+# Q4 reasons for trust
+reasons = find_tree(TREE_MERGED, 'Reasons for Trust')
+authorities = find_tree(TREE_MERGED, 'Trustable Authorities')
+reason_data = {n: r['frequency'] + r['sub_frequency'] for n, r in authorities['children'].items()}
+reason_data.update({n: r['frequency'] + r['sub_frequency'] for n, r in reasons['children'].items() if n!='Trustable Authorities'})
+reason_data['Others'] = sum([d['frequency'] + d['sub_frequency'] for d in [reasons['children']['Others'], authorities['children']['Others']]])
+fig = go.Figure(go.Bar(y=list(reason_data.keys()), x=list(reason_data.values()), orientation='h'))
+fig.add_shape(type="rect", x0=0, y0=0.5, x1=15, y1=4.5, line=dict(color="RoyalBlue"))
+fig.add_annotation(text="Authorities", x=16, y=2.5, showarrow=False, textangle=-90)
+fig.update_layout(width=PLOT_WIDTH*0.5, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0}, showlegend=False)
+fig.show()
+fig.write_image("paper_results/q4_trust_reasons.pdf")
 
 # Q3 competitors used
-used = {n.replace('Used: ', ''): c['frequency'] + c['sub_frequency'] for n, c in TREE_MERGED['children']['Q3 - Competitors?']['children']['Workflows and Use']['children'].items() if 'Used' in n or 'Other' in n}
+used = {n.replace('Used: ', ''): c['frequency'] + c['sub_frequency'] for n, c in find_tree(TREE_MERGED, 'Workflows and Use')['children'].items() if 'Used' in n or 'Other' in n}
 fig = go.Figure(go.Bar(y=list(used.keys()), x=list(used.values()), orientation='h'))
-fig.update_layout(width=PLOT_WIDTH * 0.5, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0}, showlegend=False)
+fig.update_layout(width=PLOT_WIDTH*0.5, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0}, showlegend=False)
 fig.show()
 fig.write_image("paper_results/q3_competitors.pdf")
 
