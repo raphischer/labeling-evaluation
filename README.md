@@ -1,32 +1,17 @@
 # Materials for *Bridging the Communication Gap: Evaluating AI Labeling Practices for Trustworthy AI Development*
 
-This repository contains the code and materials for our labeling study.
+This repository contains the code and materials for our labeling study, which is currently under review.
 
 ## Citing
 
-Coming soon (paste once available)
-
-## Contents
-
-- `data/`: Contains the datasets used in the study.
-- `scripts/`: Contains the scripts for data processing and analysis.
-- `results/`: Contains the results of the study.
-- `docs/`: Contains documentation and reports related to the study.
+Coming soon (paste once available).
 
 ## Usage
 
-To start the analysis, run the main script:
+To re-generate our figures, run
 
 ```bash
-python scripts/main.py
+python create_paper_results.py
 ```
 
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.
-
-## Contact
+Copyright (c) Owner of this repository
