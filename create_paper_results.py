@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly.colors import sample_colorscale, make_colorscale
-
+from PIL import Image
 import numpy as np
 import pandas as pd
 
@@ -138,8 +138,32 @@ def find_in_tree(tree, code, parent):
     if len(tree['children']) == 0:
         return False
     return any([find_in_tree(child, code, parent) for child in tree['children'].values()])
-    
 
+def tree_as_wc_freq_dict(tree):
+    if len(tree['children']) == 0:
+        if tree['name'] == 'Others':
+            return {}
+        return {tree['name']: tree['frequency']}
+    else:
+        freqs = {}
+        for child in tree['children'].values():
+            freqs.update(tree_as_wc_freq_dict(child))
+        if tree['frequency'] > 0:
+            freqs[tree['name']] = tree['frequency']
+        return freqs
+
+def tree_as_wc_text(tree):
+    if len(tree['children']) == 0:
+        if tree['name'] == 'Others':
+            return ''
+        return '   '.join([tree['name']] * tree['frequency'])
+    else:
+        subtrees = '   '.join([tree_as_wc_text(child) for child in tree['children'].values()])
+        if tree['frequency'] > 0:
+            return '   '.join([tree['name']] * tree['frequency']) + subtrees
+        else:
+            return subtrees
+    
 fam_quotes = { 
     'General Codes': ("To use AI [\dots] to counter the shortage of skilled workers", 'I14, p. 4'),
     'Types of Daily Work': ("develop an app to detect tolerable products in the supermarket", 'I10, p. 4'),
@@ -211,6 +235,59 @@ for fam, fam_codes in TREE_MERGED['children'].items():
             r'\end{tikzpicture}' ])
         with open(f'paper_results/codes_{fam.split(" ")[0]}_{code.replace(" ", "_")}.tex', 'w') as tf:
             tf.write(tikz_code)
+
+# SUMMARIZE FIGURE FOR SEC 4
+import plotly.express as px
+
+# global
+names, parents, values = ["RQ"] + list(TREE_MERGED['children'].keys()), [""] + ["RQ"] * len(TREE_MERGED['children']), [(TREE_MERGED["frequency"] + TREE_MERGED["sub_frequency"])*2] + [ch["frequency"] + ch["sub_frequency"] for ch in TREE_MERGED['children'].values()]
+for parent, subsubtree in TREE_MERGED['children'].items():
+    for subsubsubtree in subsubtree['children'].values():
+        names.append(subsubsubtree["name"])
+        parents.append(parent)
+        values.append(subsubsubtree["frequency"] + subsubsubtree["sub_frequency"])
+data = dict(names=names, parents=parents, values=values)
+fig = go.Figure(go.Sunburst(labels=names, parents=parents, values=values, branchvalues="total"))
+fig.update_layout(width=int(PLOT_WIDTH * 0.75), height=int(PLOT_WIDTH * 0.75), margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
+fig.show()
+fig.write_image(f"paper_results/sum_all.pdf")
+
+# detailed
+for rq, subtree in TREE_MERGED['children'].items():
+    names, parents, values = [rq] + list(subtree['children'].keys()), [""] + [rq] * len(subtree['children']), [subtree["frequency"] + subtree["sub_frequency"]] + [ch["frequency"] + ch["sub_frequency"] for ch in subtree['children'].values()]
+    for parent, subsubtree in subtree['children'].items():
+        for subsubsubtree in subsubtree['children'].values():
+            names.append(subsubsubtree["name"])
+            parents.append(parent)
+            values.append(subsubsubtree["frequency"] + subsubsubtree["sub_frequency"])
+    #     freqs = tree_as_wc_freq_dict(subsubtree)
+    #     for name, freq in freqs.items():
+    #         names.append(name)
+    #         parents.append(parent)
+    #         values.append(freq)
+    # names = ["Eve", "Cain", "Seth", "Enos", "Noam", "Abel", "Awan", "Enoch", "Azura"]
+    # parents = ["", "Eve", "Eve", "Seth", "Seth", "Eve", "Eve", "Awan", "Eve" ]
+    # values = [10, 14, 12, 10, 2, 6, 6, 4, 4]
+    data = dict(names=names, parents=parents, values=values)
+            
+    fig = go.Figure(go.Sunburst(labels=names, parents=parents, values=values, branchvalues="total"))
+    fig.update_layout(width=PLOT_WIDTH//4, height=PLOT_WIDTH//4, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
+    fig.show()
+    fig.write_image(f"paper_results/sum_{rq.split()[0]}.pdf")
+
+from wordcloud import WordCloud, STOPWORDS
+mask = np.array(Image.open('stencil_rq1.png'))
+wc = WordCloud(width=PLOT_WIDTH, height=PLOT_WIDTH // 2, background_color="white")
+# mask=mask, contour_width=3, contour_color='steelblue')
+# for rq, subtree in TREE_MERGED['children'].items():
+    # text = tree_as_wc_text(subtree)
+    # proc = wc.process_text(text)
+proc = tree_as_wc_freq_dict(TREE_MERGED)
+    # wordcloud = wc.generate(text)
+wordcloud = wc.generate_from_frequencies(proc)
+image = wordcloud.to_image()
+image.show()
+image.save(f'paper_results/wc.png')
 
 # Q4 reasons for trust
 reasons = find_tree(TREE_MERGED, 'Reasons for Trust')
