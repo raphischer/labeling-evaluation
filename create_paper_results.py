@@ -242,23 +242,29 @@ import plotly.express as px
 
 # global sunburst summarizing Sec4
 rqs, total_codes = list(reversed(sorted(list(TREE_MERGED['children'].keys())))), TREE_MERGED["frequency"] + TREE_MERGED["sub_frequency"]
+rqs_fmt = [":<br>".join(rq.split(" - ")) for rq in rqs]
 rq_total_codes = [TREE_MERGED["children"][rq]["frequency"] + TREE_MERGED["children"][rq]["sub_frequency"] for rq in rqs]
-codes, parents, counts = ["   "] + rqs, [""] + ["   "] * len(rqs), [total_codes*2] + rq_total_codes
-for rq in rqs:
-    for subtree in TREE_MERGED["children"][rq]['children'].values():
+codes, parents, counts = ["   "] + rqs_fmt, [""] + ["   "] * len(rqs), [total_codes*2] + rq_total_codes
+for rq, rq_fmt in zip(rqs, rqs_fmt):
+    for idx, subtree in enumerate(TREE_MERGED["children"][rq]['children'].values()):
         codes.append(subtree["name"])
-        parents.append(rq)
+        parents.append(rq_fmt)
         counts.append(subtree["frequency"] + subtree["sub_frequency"])
-        # if counts[-1] > 50:
-        parent_count = counts[-1]
+        # others = 0
         for subsubtree in subtree['children'].values():
-            # if subsubtree['frequency'] + subsubtree['sub_frequency'] > parent_count // 10:
-            codes.append(subsubtree["name"])
+            # if subsubtree['frequency'] + subsubtree['sub_frequency'] > 8:
+            codes.append( subsubtree["name"] if len(subsubtree["name"]) < 19 else subsubtree["name"][:16] + ".." )
             parents.append(subtree["name"])
             counts.append(subsubtree["frequency"] + subsubtree["sub_frequency"])
+        #     else:
+        #         others += subsubtree["frequency"] + subsubtree["sub_frequency"]
+        # if others > 0:
+        #     codes.append("Others" + ' ' * idx)
+        #     parents.append(subtree["name"])
+        #     counts.append(others)
 fig = go.Figure(go.Sunburst(labels=codes, parents=parents, values=counts, branchvalues="total", insidetextorientation='radial', sort=False))
-fig.update_layout(width=int(PLOT_WIDTH * 0.9), height=int(PLOT_WIDTH * 0.9), margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
-fig.add_annotation(x=0.5, y=0.5, text="Research Questions", showarrow=False, yshift=40)
+fig.update_layout(width=PLOT_WIDTH, height=PLOT_WIDTH, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
+fig.add_annotation(x=0.5, y=0.5, text="Opinions and Statements<br>Towards Research Questions", showarrow=False, yshift=40)
 fig.show()
 fig.write_image(f"paper_results/sum_all.pdf")
 
