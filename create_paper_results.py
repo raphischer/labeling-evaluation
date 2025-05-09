@@ -262,9 +262,12 @@ for rq, rq_fmt in zip(rqs, rqs_fmt):
         #     codes.append("Others" + ' ' * idx)
         #     parents.append(subtree["name"])
         #     counts.append(others)
-fig = go.Figure(go.Sunburst(labels=codes, parents=parents, values=counts, branchvalues="total", insidetextorientation='radial', sort=False))
+results = pd.DataFrame([codes, parents, counts], index=['codes', 'parents', 'counts']).transpose()
+# results.to_csv('ch4_evaluation_study_codes.csv', index=False, header=True)
+fig = go.Figure(go.Sunburst(labels=results['codes'], parents=results['parents'], values=results['counts'],
+                            branchvalues="total", insidetextorientation='radial', sort=False, marker=dict(colors=['', '#009ee3', '#983082' '#ffbc29', '#ec6469'])))
 fig.update_layout(width=PLOT_WIDTH, height=PLOT_WIDTH, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
-fig.add_annotation(x=0.5, y=0.5, text="Opinions and Statements<br>Towards Research Questions", showarrow=False, yshift=40)
+fig.add_annotation(x=0.5, y=0.5, text="Opinions and Statements<br>Toward Research Questions", showarrow=False, yshift=40)
 fig.show()
 fig.write_image(f"paper_results/sum_all.pdf")
 
