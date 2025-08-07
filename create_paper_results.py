@@ -172,7 +172,7 @@ fam_quotes = {
     'ML Methods': ("the AI evaluates whether the typed text contains specific data", 'I3, p. 44'),
     'ML Tools & Brands': ("I used scikit-learn models and also worked with TensorFlow", 'I13, p. 4'),
     'Requirements on AI': ("My boss doesn't care much about the process, he wants results", 'I13, p. 160'),
-    'Benefits': ("Your label hhelps me to decide immediately, it saves a lot of time", 'I9, p. 219'),
+    'Benefits': ("Your label helps me to decide immediately, it saves a lot of time", 'I9, p. 219'),
     'Limitations': ("I don't get how the value is included in the overall scoring", 'I16, p. 58'),
     'Property Importance': ("the primary objectives: reducing time and enhancing accuracy", 'I7, p. 98'),
     'Associations': ("like I'm looking for a washing machine at the DIY store", 'I3, p. 84'),
