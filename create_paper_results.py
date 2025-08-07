@@ -6,9 +6,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly.colors import sample_colorscale, make_colorscale
 from PIL import Image
+import plotly.io as pio
 import numpy as np
 import pandas as pd
-
 
 LAMARR_COLORS = [
     '#009ee3', # aqua
@@ -23,9 +23,12 @@ LAMARR_COLORS = [
     '#0c122b', # dark corn flower
     '#ffffff'
 ]
-LAM_COL_SCALE = make_colorscale([LAMARR_COLORS[0], LAMARR_COLORS[2], LAMARR_COLORS[4]])
-LAM_COL_FIVE = sample_colorscale(LAM_COL_SCALE, np.linspace(0, 1, 5))
-LAM_COL_TEN = sample_colorscale(LAM_COL_SCALE, np.linspace(0, 1, 10))
+SEL_COLORS = ['#ec6469', '#35cdb4', '#ffbc29', '#59bdf7']
+
+LAM_COL_SCALE = make_colorscale(SEL_COLORS)
+LAM_COL_SIX = sample_colorscale(LAM_COL_SCALE, np.linspace(0, 1, 6))
+
+pio.templates[pio.templates.default].layout.colorway = SEL_COLORS
 
 
 def build_dict_from_excel(excel_file, discard):
@@ -55,7 +58,6 @@ def build_dict_from_excel(excel_file, discard):
                 frequencies[tuple(current_keys)] = 0
     return frequencies
 
-
 def build_tree_from_dict(data):
     tree = {}
     for key_tuple, frequency in data.items():
@@ -78,7 +80,6 @@ def build_tree_from_dict(data):
     add_subtree_freqs(tree)
     return tree
 
-
 def recursively_walk_tree(tree, print_nodes=True):
     freq = str(tree['frequency'])
     if tree['sub_frequency'] > 0:
@@ -94,7 +95,6 @@ def recursively_walk_tree(tree, print_nodes=True):
             sub_size += recursively_walk_tree(sub_tree, print_nodes=print_nodes)
         return sub_size
     
-
 def merge_rare(tree, threshold=2):
     new = {'name': tree['name'], 'frequency': tree['frequency'], 'sub_frequency': tree['sub_frequency'], 'level': tree['level'], 'children': {}}
     other, keep = 0, []
@@ -111,7 +111,6 @@ def merge_rare(tree, threshold=2):
         new['children'][child['name']] = child
     return new
 
-
 def generate_qtree_code(node):    
     sub_freq = '' if node["sub_frequency"] == 0 else f'+{node["sub_frequency"]}'
     node_label = f'{{{node["name"]} ({node["frequency"]}{sub_freq})}}'
@@ -122,7 +121,6 @@ def generate_qtree_code(node):
         children_code = " ".join(generate_qtree_code(child) for child in node["children"].values())
         return f"[.{node_label} {children_code} ]"
     
-
 def find_tree(tree, code):
     if tree['name'] == code:
         return tree
@@ -131,7 +129,6 @@ def find_tree(tree, code):
         if ret:
             return ret
     return None
-
 
 def find_in_tree(tree, code, parent):
     if tree['name'] == parent and code in tree['children']:
@@ -237,9 +234,6 @@ for fam, fam_codes in TREE_MERGED['children'].items():
         with open(f'paper_results/codes_{fam.split(" ")[0]}_{code.replace(" ", "_")}.tex', 'w') as tf:
             tf.write(tikz_code)
 
-# SUMMARIZE FIGURE FOR SEC 4
-import plotly.express as px
-
 # global sunburst summarizing Sec4
 rqs, total_codes = list(reversed(sorted(list(TREE_MERGED['children'].keys())))), TREE_MERGED["frequency"] + TREE_MERGED["sub_frequency"]
 rqs_fmt = [":<br>".join(rq.split(" - ")) for rq in rqs]
@@ -265,7 +259,7 @@ for rq, rq_fmt in zip(rqs, rqs_fmt):
 results = pd.DataFrame([codes, parents, counts], index=['codes', 'parents', 'counts']).transpose()
 # results.to_csv('ch4_evaluation_study_codes.csv', index=False, header=True)
 fig = go.Figure(go.Sunburst(labels=results['codes'], parents=results['parents'], values=results['counts'],
-                            branchvalues="total", insidetextorientation='radial', sort=False, marker=dict(colors=['', '#009ee3', '#983082' '#ffbc29', '#ec6469'])))
+                            branchvalues="total", insidetextorientation='radial', sort=False))
 fig.update_layout(width=PLOT_WIDTH, height=PLOT_WIDTH, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
 fig.add_annotation(x=0.5, y=0.5, text="Opinions and Statements<br>Toward Research Questions", showarrow=False, yshift=40)
 fig.show()
@@ -344,9 +338,9 @@ for id, data in codes_per_id.groupby('id'):
     for code, count in counts.items():
         interviewees.loc[idx,code] = count
 fig = go.Figure()
-fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Benefits'], name='Benefits', marker=dict(color=LAM_COL_FIVE[0])))
-fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Room for Improvements'] * -1, name='Room for Improvements', marker=dict(color=LAM_COL_FIVE[2])))
-fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Limitations'] * -1, name='Limitations', marker=dict(color=LAM_COL_FIVE[4])))
+fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Benefits'], name='Benefits', marker=dict(color=LAM_COL_SIX[0])))
+fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Room for Improvements'] * -1, name='Room for Improvements', marker=dict(color=LAM_COL_SIX[2])))
+fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Limitations'] * -1, name='Limitations', marker=dict(color=LAM_COL_SIX[4])))
 fig.update_layout(barmode='relative', width=PLOT_WIDTH*0.6, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
                   legend=dict(orientation="h", yanchor="top", y=1.2, xanchor="center", x=0.5),
                   yaxis={'title': 'Code Occurrences', 'tick0': -20, 'dtick': 5, 'tickformat': '',
@@ -365,8 +359,8 @@ for code in codes:
         if 'RQ2' in fam:
             prop_importance[fam][-1] = prop_importance[fam][-1] * -1
 fig = go.Figure()
-fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['RQ1 - Who and Why?'], name='generally discussing AI', marker=dict(color=LAM_COL_FIVE[0])))
-fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['RQ2 - How to Label?'], name='facing labels', marker=dict(color=LAM_COL_FIVE[4])))
+fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['RQ1 - Who and Why?'], name='generally discussing AI', marker=dict(color=LAM_COL_SIX[0])))
+fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['RQ2 - How to Label?'], name='facing labels', marker=dict(color=LAM_COL_SIX[4])))
 fig.update_layout(barmode='relative', width=PLOT_WIDTH*0.4, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
                   legend=dict(orientation='h', yanchor="top", y=1.2, xanchor="center", x=0.5),
                   yaxis={'title': 'Code Occurrences', 'tick0': -20, 'dtick': 5, 'tickformat': '',
