@@ -5,10 +5,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly.colors import sample_colorscale, make_colorscale
-
+from PIL import Image
+import plotly.io as pio
 import numpy as np
 import pandas as pd
-
 
 LAMARR_COLORS = [
     '#009ee3', # aqua
@@ -23,9 +23,12 @@ LAMARR_COLORS = [
     '#0c122b', # dark corn flower
     '#ffffff'
 ]
-LAM_COL_SCALE = make_colorscale([LAMARR_COLORS[0], LAMARR_COLORS[2], LAMARR_COLORS[4]])
-LAM_COL_FIVE = sample_colorscale(LAM_COL_SCALE, np.linspace(0, 1, 5))
-LAM_COL_TEN = sample_colorscale(LAM_COL_SCALE, np.linspace(0, 1, 10))
+SEL_COLORS = ['#ec6469', '#35cdb4', '#ffbc29', '#59bdf7']
+
+LAM_COL_SCALE = make_colorscale(SEL_COLORS)
+LAM_COL_SIX = sample_colorscale(LAM_COL_SCALE, np.linspace(0, 1, 6))
+
+pio.templates[pio.templates.default].layout.colorway = SEL_COLORS
 
 
 def build_dict_from_excel(excel_file, discard):
@@ -33,6 +36,7 @@ def build_dict_from_excel(excel_file, discard):
     current_keys, current_level, frequencies = [], -1, {}
     for _, row in codes.iterrows():
         for idx, v in enumerate(row.__iter__()):
+            v = v.replace('Q1', 'RQ1').replace('Q2', 'RQ2').replace('Q3', 'RQ3').replace('Q4', 'RQ4')
             if len(v.strip()) == 0:
                 continue
             if idx == current_level:
@@ -53,7 +57,6 @@ def build_dict_from_excel(excel_file, discard):
             except Exception:
                 frequencies[tuple(current_keys)] = 0
     return frequencies
-
 
 def build_tree_from_dict(data):
     tree = {}
@@ -77,7 +80,6 @@ def build_tree_from_dict(data):
     add_subtree_freqs(tree)
     return tree
 
-
 def recursively_walk_tree(tree, print_nodes=True):
     freq = str(tree['frequency'])
     if tree['sub_frequency'] > 0:
@@ -93,7 +95,6 @@ def recursively_walk_tree(tree, print_nodes=True):
             sub_size += recursively_walk_tree(sub_tree, print_nodes=print_nodes)
         return sub_size
     
-
 def merge_rare(tree, threshold=2):
     new = {'name': tree['name'], 'frequency': tree['frequency'], 'sub_frequency': tree['sub_frequency'], 'level': tree['level'], 'children': {}}
     other, keep = 0, []
@@ -110,7 +111,6 @@ def merge_rare(tree, threshold=2):
         new['children'][child['name']] = child
     return new
 
-
 def generate_qtree_code(node):    
     sub_freq = '' if node["sub_frequency"] == 0 else f'+{node["sub_frequency"]}'
     node_label = f'{{{node["name"]} ({node["frequency"]}{sub_freq})}}'
@@ -121,7 +121,6 @@ def generate_qtree_code(node):
         children_code = " ".join(generate_qtree_code(child) for child in node["children"].values())
         return f"[.{node_label} {children_code} ]"
     
-
 def find_tree(tree, code):
     if tree['name'] == code:
         return tree
@@ -131,15 +130,38 @@ def find_tree(tree, code):
             return ret
     return None
 
-
 def find_in_tree(tree, code, parent):
     if tree['name'] == parent and code in tree['children']:
         return True
     if len(tree['children']) == 0:
         return False
     return any([find_in_tree(child, code, parent) for child in tree['children'].values()])
-    
 
+def tree_as_wc_freq_dict(tree):
+    if len(tree['children']) == 0:
+        if tree['name'] == 'Others':
+            return {}
+        return {tree['name']: tree['frequency']}
+    else:
+        freqs = {}
+        for child in tree['children'].values():
+            freqs.update(tree_as_wc_freq_dict(child))
+        if tree['frequency'] > 0:
+            freqs[tree['name']] = tree['frequency']
+        return freqs
+
+def tree_as_wc_text(tree):
+    if len(tree['children']) == 0:
+        if tree['name'] == 'Others':
+            return ''
+        return '   '.join([tree['name']] * tree['frequency'])
+    else:
+        subtrees = '   '.join([tree_as_wc_text(child) for child in tree['children'].values()])
+        if tree['frequency'] > 0:
+            return '   '.join([tree['name']] * tree['frequency']) + subtrees
+        else:
+            return subtrees
+    
 fam_quotes = { 
     'General Codes': ("To use AI [\dots] to counter the shortage of skilled workers", 'I14, p. 4'),
     'Types of Daily Work': ("develop an app to detect tolerable products in the supermarket", 'I10, p. 4'),
@@ -147,7 +169,7 @@ fam_quotes = {
     'ML Methods': ("the AI evaluates whether the typed text contains specific data", 'I3, p. 44'),
     'ML Tools & Brands': ("I used scikit-learn models and also worked with TensorFlow", 'I13, p. 4'),
     'Requirements on AI': ("My boss doesn't care much about the process, he wants results", 'I13, p. 160'),
-    'Benefits': ("Your label hhelps me to decide immediately, it saves a lot of time", 'I9, p. 219'),
+    'Benefits': ("Your label helps me to decide immediately, it saves a lot of time", 'I9, p. 219'),
     'Limitations': ("I don't get how the value is included in the overall scoring", 'I16, p. 58'),
     'Property Importance': ("the primary objectives: reducing time and enhancing accuracy", 'I7, p. 98'),
     'Associations': ("like I'm looking for a washing machine at the DIY store", 'I3, p. 84'),
@@ -212,6 +234,74 @@ for fam, fam_codes in TREE_MERGED['children'].items():
         with open(f'paper_results/codes_{fam.split(" ")[0]}_{code.replace(" ", "_")}.tex', 'w') as tf:
             tf.write(tikz_code)
 
+# global sunburst summarizing Sec4
+rqs, total_codes = list(reversed(sorted(list(TREE_MERGED['children'].keys())))), TREE_MERGED["frequency"] + TREE_MERGED["sub_frequency"]
+rqs_fmt = [":<br>".join(rq.split(" - ")) for rq in rqs]
+rq_total_codes = [TREE_MERGED["children"][rq]["frequency"] + TREE_MERGED["children"][rq]["sub_frequency"] for rq in rqs]
+codes, parents, counts = ["   "] + rqs_fmt, [""] + ["   "] * len(rqs), [total_codes*2] + rq_total_codes
+for rq, rq_fmt in zip(rqs, rqs_fmt):
+    for idx, subtree in enumerate(TREE_MERGED["children"][rq]['children'].values()):
+        codes.append(subtree["name"])
+        parents.append(rq_fmt)
+        counts.append(subtree["frequency"] + subtree["sub_frequency"])
+        # others = 0
+        for subsubtree in subtree['children'].values():
+            # if subsubtree['frequency'] + subsubtree['sub_frequency'] > 8:
+            codes.append( subsubtree["name"] if len(subsubtree["name"]) < 19 else subsubtree["name"][:16] + ".." )
+            parents.append(subtree["name"])
+            counts.append(subsubtree["frequency"] + subsubtree["sub_frequency"])
+        #     else:
+        #         others += subsubtree["frequency"] + subsubtree["sub_frequency"]
+        # if others > 0:
+        #     codes.append("Others" + ' ' * idx)
+        #     parents.append(subtree["name"])
+        #     counts.append(others)
+results = pd.DataFrame([codes, parents, counts], index=['codes', 'parents', 'counts']).transpose()
+# results.to_csv('ch4_evaluation_study_codes.csv', index=False, header=True)
+fig = go.Figure(go.Sunburst(labels=results['codes'], parents=results['parents'], values=results['counts'],
+                            branchvalues="total", insidetextorientation='radial', sort=False))
+fig.update_layout(width=PLOT_WIDTH, height=PLOT_WIDTH, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
+fig.add_annotation(x=0.5, y=0.5, text="Opinions and Statements<br>Toward Research Questions", showarrow=False, yshift=40)
+fig.show()
+fig.write_image(f"paper_results/sum_all.pdf")
+
+# detailed
+# for rq, subtree in TREE_MERGED['children'].items():
+#     names, parents, values = [rq] + list(subtree['children'].keys()), [""] + [rq] * len(subtree['children']), [subtree["frequency"] + subtree["sub_frequency"]] + [ch["frequency"] + ch["sub_frequency"] for ch in subtree['children'].values()]
+#     for parent, subsubtree in subtree['children'].items():
+#         for subsubsubtree in subsubtree['children'].values():
+#             names.append(subsubsubtree["name"])
+#             parents.append(parent)
+#             values.append(subsubsubtree["frequency"] + subsubsubtree["sub_frequency"])
+#     #     freqs = tree_as_wc_freq_dict(subsubtree)
+#     #     for name, freq in freqs.items():
+#     #         names.append(name)
+#     #         parents.append(parent)
+#     #         values.append(freq)
+#     # names = ["Eve", "Cain", "Seth", "Enos", "Noam", "Abel", "Awan", "Enoch", "Azura"]
+#     # parents = ["", "Eve", "Eve", "Seth", "Seth", "Eve", "Eve", "Awan", "Eve" ]
+#     # values = [10, 14, 12, 10, 2, 6, 6, 4, 4]
+#     data = dict(names=names, parents=parents, values=values)
+            
+#     fig = go.Figure(go.Sunburst(labels=names, parents=parents, values=values, branchvalues="total"))
+#     fig.update_layout(width=PLOT_WIDTH//4, height=PLOT_WIDTH//4, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
+#     fig.show()
+#     fig.write_image(f"paper_results/sum_{rq.split()[0]}.pdf")
+
+# from wordcloud import WordCloud, STOPWORDS
+# mask = np.array(Image.open('stencil_rq1.png'))
+# wc = WordCloud(width=PLOT_WIDTH, height=PLOT_WIDTH // 2, background_color="white")
+# # mask=mask, contour_width=3, contour_color='steelblue')
+# # for rq, subtree in TREE_MERGED['children'].items():
+#     # text = tree_as_wc_text(subtree)
+#     # proc = wc.process_text(text)
+# proc = tree_as_wc_freq_dict(TREE_MERGED)
+#     # wordcloud = wc.generate(text)
+# wordcloud = wc.generate_from_frequencies(proc)
+# image = wordcloud.to_image()
+# image.show()
+# image.save(f'paper_results/wc.png')
+
 # Q4 reasons for trust
 reasons = find_tree(TREE_MERGED, 'Reasons for Trust')
 authorities = find_tree(TREE_MERGED, 'Trustable Authorities')
@@ -248,9 +338,9 @@ for id, data in codes_per_id.groupby('id'):
     for code, count in counts.items():
         interviewees.loc[idx,code] = count
 fig = go.Figure()
-fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Benefits'], name='Benefits', marker=dict(color=LAM_COL_FIVE[0])))
-fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Room for Improvements'] * -1, name='Room for Improvements', marker=dict(color=LAM_COL_FIVE[2])))
-fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Limitations'] * -1, name='Limitations', marker=dict(color=LAM_COL_FIVE[4])))
+fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Benefits'], name='Benefits', marker=dict(color=LAM_COL_SIX[0])))
+fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Room for Improvements'] * -1, name='Room for Improvements', marker=dict(color=LAM_COL_SIX[2])))
+fig.add_trace(go.Bar(x=interviewees['id'], y=interviewees['Limitations'] * -1, name='Limitations', marker=dict(color=LAM_COL_SIX[4])))
 fig.update_layout(barmode='relative', width=PLOT_WIDTH*0.6, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
                   legend=dict(orientation="h", yanchor="top", y=1.2, xanchor="center", x=0.5),
                   yaxis={'title': 'Code Occurrences', 'tick0': -20, 'dtick': 5, 'tickformat': '',
@@ -260,17 +350,17 @@ fig.write_image("paper_results/q2_sentiment.pdf")
 
 # Q2 property importance
 codes = {'Energy, Resources & Sustainability': 'Resources', 'Predictive Quality': 'Pred Qual', 'Temporal Performance': 'Temp Perf', 'Consistency & Robustness': 'Robustness'}
-fams = ['Q1 - Who and Why?', 'Q2 - How to Label?']
+fams = ['RQ1 - Who and Why?', 'RQ2 - How to Label?']
 prop_importance = {fam: [] for fam in fams}
 for code in codes:
     for fam in fams:
         node = find_tree(TREE['children'][fam], code)
         prop_importance[fam].append( node['frequency'] + node['sub_frequency'] )
-        if 'Q2' in fam:
+        if 'RQ2' in fam:
             prop_importance[fam][-1] = prop_importance[fam][-1] * -1
 fig = go.Figure()
-fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['Q1 - Who and Why?'], name='generally discussing AI', marker=dict(color=LAM_COL_FIVE[0])))
-fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['Q2 - How to Label?'], name='facing labels', marker=dict(color=LAM_COL_FIVE[4])))
+fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['RQ1 - Who and Why?'], name='generally discussing AI', marker=dict(color=LAM_COL_SIX[0])))
+fig.add_trace(go.Bar(x=list(codes.values()), y=prop_importance['RQ2 - How to Label?'], name='facing labels', marker=dict(color=LAM_COL_SIX[4])))
 fig.update_layout(barmode='relative', width=PLOT_WIDTH*0.4, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
                   legend=dict(orientation='h', yanchor="top", y=1.2, xanchor="center", x=0.5),
                   yaxis={'title': 'Code Occurrences', 'tick0': -20, 'dtick': 5, 'tickformat': '',
@@ -281,7 +371,7 @@ fig.write_image("paper_results/q2_prop_importances.pdf")
 # Q1 figure
 daily_dicts = {}
 for code in ['General Codes', 'Types of Daily Work', 'ML Methods', 'AI Use Cases', 'ML Tools & Brands', 'Requirements on AI']:
-    daily_dicts[code] = TREE_MERGED['children']['Q1 - Who and Why?']['children'][code]['children']
+    daily_dicts[code] = TREE_MERGED['children']['RQ1 - Who and Why?']['children'][code]['children']
 fig = make_subplots(rows=2, cols=3, subplot_titles=list(daily_dicts.keys()), horizontal_spacing=0.2, vertical_spacing=0.12)
 for i, (code, dict) in enumerate(daily_dicts.items()):
     keys = [key[:20] + '..' if len(key) > 20 else key for key in dict.keys()]
