@@ -25,7 +25,7 @@ Based on the interview transcripts, we performed a thematic analysis with [MAXQD
 ├── paper_results/   # Tables and plots generated for the paper
 ├── scripts/         # Python scripts for the analysis and plotting
 ├── .gitignore       # Excluding certain files (non-anonmyized data)
-├── README.md        # You are here 🚀
+└── README.md        # You are here 🚀
 ```
 
 ## 💡 Insights
