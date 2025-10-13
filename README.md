@@ -2,7 +2,7 @@
 
 Our research suggests that AI labels can bridge communication gaps, promote trust, and act as a lever for sustainable development!
 
-![Label Demo](./materials/24_ml_label_demo.png)
+<img src="./materials/24_ml_label_demo.png" alt="Label Demo" width="50%" />
 
 This repository contains additional materials for our respective evaluation study, which is forthcoming at the [AAAI/ACM Conference on AI, Ethics, and Society](https://www.aies-conference.com/2025/) and already [published as a preprint](https://arxiv.org/abs/2501.11909). 
 
