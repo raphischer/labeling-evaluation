@@ -4,7 +4,7 @@ Our research suggests that AI labels can bridge communication gaps, promote trus
 
 <img src="./materials/24_ml_label_demo.png" alt="Label Demo" width="50%" />
 
-This repository contains additional materials for our respective evaluation study, which is forthcoming at the [AAAI/ACM Conference on AI, Ethics, and Society](https://www.aies-conference.com/2025/) and already [published as a preprint](https://arxiv.org/abs/2501.11909). 
+This repository contains additional materials for our respective evaluation study, which is forthcoming at the [AAAI/ACM Conference on AI, Ethics, and Society](https://www.aies-conference.com/2025/) and was already [published as a preprint](https://arxiv.org/abs/2501.11909). 
 
 Do you want to know more about our study? Check out our [Blog post](https://lamarr-institute.org/blog/ai-labels-for-trust/)! If you want to learn more about the concepts of AI labels, you can also read into Chapter 4 of [Raphael Fischer's PhD thesis](https://doi.org/10.17877/DE290R-25716).
 
