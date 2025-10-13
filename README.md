@@ -21,9 +21,9 @@ Based on the interview transcripts, we performed a thematic analysis with [MAXQD
 ## 📂 Repository Structure
 ```bash
 ├── analysis/        # Out analysis results (machine-readable)
-├── materials/       # Used in our study, like the interview guide
-├── scripts/         # Python scripts for the analysis and plotting
+├── materials/       # Resources of our study, like the transcripts
 ├── paper_results/   # Tables and plots generated for the paper
+├── scripts/         # Python scripts for the analysis and plotting
 ├── .gitignore       # Excluding certain files (non-anonmyized data)
 ├── README.md        # You are here 🚀
 ```
