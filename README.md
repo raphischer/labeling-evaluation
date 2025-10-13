@@ -13,10 +13,20 @@ We generated the labels with the [STREP framework](https://github.com/raphischer
 - Who is interested in AI labeling and what are their problems with using or developing AI? (RQ1)
 - What are the practical benefits and limitations of labeling AI model behavior? (RQ2)
 - How are AI labels perceived in comparison to other forms of reporting? (RQ3)
-- How do AI labels and the corresponding certifying authority affect the trustworthiness of AI systems? (RQ4)#
-Based on the interview transcripts, we performed a thematic analysis with [MAXQDA](https://www.maxqda.com/) and thus derived an extensive code system over several iterations:
+- How do AI labels and the corresponding certifying authority affect the trustworthiness of AI systems? (RQ4)
+Based on the interview transcripts, we performed a thematic analysis with [MAXQDA](https://www.maxqda.com/) and derived an extensive hierarchical code system over several iterations:
 
 ![Thematic Analysis Summary](./paper_results/sum_all.png)
+
+## 📂 Repository Structure
+```bash
+├── analysis/        # Out analysis results (machine-readable)
+├── materials/       # Used in our study, like the interview guide
+├── scripts/         # Python scripts for the analysis and plotting
+├── paper_results/   # Tables and plots generated for the paper
+├── .gitignore       # Excluding certain files (non-anonmyized data)
+├── README.md        # You are here 🚀
+```
 
 ## 💡 Insights
 Our study shows that there is a real need for simplified representations of AI. Labels can serve as a bridge between experts and users, reduce misunderstandings, and facilitate employee involvement. Especially for user groups without technical knowledge, AI labels offer quick access to relevant information and thus support responsible and reflective AI usage.
