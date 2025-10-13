@@ -32,26 +32,28 @@ renamed = {
     '11_technische-ki-kenntnisse-selbsteinschaetzung':  ('Numeric AI Skills', lambda v: int(v.split(' ')[0].split('(')[0]))
 }
 
+root_dir = os.path.dirname(os.path.dirname(__file__))
+                        
 renamed_cols = {col: ren[0] for col, ren in renamed.items()}
 col_map_funcs = {func[0]: func[1] for func in renamed.values() if func[1] is not None}
-data = pd.read_csv('.anon_exports/applicants.csv')
+data = pd.read_csv(os.path.join(root_dir, '.anon_exports', 'applicants.csv'))
 data = data.drop([col for col in data.columns if col not in renamed], axis=1).rename(renamed_cols, axis=1)
 for col, func in col_map_funcs.items():
     data[col] = data[col].map(func)
 data['Self-Assessed AI Skills'] = data['Numeric AI Skills'].map(lambda v: ai_skills[v])
 data['AI Skills'] = data['Self-Assessed AI Skills'].map(lambda v: v.split(' ')[0].split('(')[0])
 data['Job Title (Qualification)'] = data['Job Title'] + ' (' + data['Highest Qualification'] + ')'
-data.sort_values(['Age']).to_csv('interviewees.csv', index=False)
+data.sort_values(['Age']).to_csv(os.path.join(root_dir, 'analysis', 'interviewees.csv'), index=False)
 
 coded_segments = []
 rename = {'Code': 'code', 'Obercode': 'parent', 'Cod. Seg. (alle Dokumente)': 'count'}
-for code_file in os.listdir('.anon_exports'):
+for code_file in os.listdir(os.path.join(root_dir, '.anon_exports')):
     if '_Codes.xlsx' in code_file:
         id = code_file.split('_')[0]
-        data = pd.read_excel(os.path.join('.anon_exports', code_file))
+        data = pd.read_excel(os.path.join(root_dir, '.anon_exports', code_file))
         data = data[list(rename.keys())]
         data['id'] = id
         coded_segments.append(data)
 segments = pd.concat(coded_segments, axis=0)
 segments = segments.rename(rename, axis=1)
-segments.to_csv('codes_per_id.csv', index=False)
+segments.to_csv(os.path.join(root_dir, 'analysis', 'codes_per_id.csv'), index=False)
