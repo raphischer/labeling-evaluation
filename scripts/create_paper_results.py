@@ -181,7 +181,7 @@ fam_quotes = {
     'Dimensions of Trust': ("trust in AI, or trust in a label -- these are two different things", 'I11, p. 152')
 }
 
-
+root_dir = os.path.dirname(os.path.dirname(__file__))
 PLOT_WIDTH = 900
 PLOT_HEIGHT = PLOT_WIDTH // 4
 
@@ -194,13 +194,14 @@ time.sleep(0.5)
 os.remove("dummy.pdf")
 
 discard = ['ANON', 'Katha dky', 'Money Quotes']
-excel_dict = build_dict_from_excel('MAXQDA24 project - Codesystem.xlsx', discard)
+excel_dict = build_dict_from_excel(os.path.join(root_dir, 'analysis', 'MAXQDA24 project - Codesystem.xlsx'), discard)
 TREE = build_tree_from_dict(excel_dict)
 tot_num, tot_freqs = str(recursively_walk_tree(TREE)), str(TREE['frequency'] + TREE['sub_frequency'])
 TREE_MERGED = merge_rare(TREE)
+codes_per_id = pd.read_csv(os.path.join(root_dir, 'analysis', 'codes_per_id.csv'))
+interviewees = pd.read_csv(os.path.join(root_dir, 'analysis', 'interviewees.csv'))
 
 # interviewee overview table
-interviewees = pd.read_csv('interviewees.csv')
 interviewees['id'] = [f'I{idx+1}' for idx in interviewees.index]
 tab_cols = ['Job Title', 'Company Type', 'Employees', 'Gender', 'Age', 'AI Skills']
 table_rows = [' $AND '.join(['ID'] + tab_cols) + r' \\', r'\toprule']
@@ -208,7 +209,7 @@ for idx, row in interviewees[tab_cols].iterrows():
     values = [f'I{idx+1}'] + row.values.astype(str).tolist()
     table_rows.append(' $AND '.join(values) + r' \\')
 tab_final = r'\begin{tabular}{lllllll}' + '\n    ' + '\n    '.join(table_rows) + '\n' + r'\end{tabular}'
-with open('paper_results/tab_interviewees.tex', 'w') as tab:
+with open(os.path.join(root_dir, 'paper_results', 'tab_interviewees.tex'), 'w') as tab:
     tab.write(tab_final.replace('&', '\&').replace('$AND', '&'))
 
 # generate overview table
@@ -221,7 +222,7 @@ for fam, fam_codes in TREE['children'].items():
         table_rows.append(' $AND '.join([code, fam.split(' ')[0], depth, freq, fmt_quote]) + r' \\')
 table_rows = table_rows + [r'\midrule', ' $AND '.join(['Total', ' ', tot_num, tot_freqs, ' '])]
 tab_final = r'\begin{tabular}{lllll}' + '\n    ' + '\n    '.join(table_rows) + '\n' + r'\end{tabular}'
-with open('paper_results/tab_codesystem_overview.tex', 'w') as tab:
+with open(os.path.join(root_dir, 'paper_results', 'tab_codesystem_overview.tex'), 'w') as tab:
     tab.write(tab_final.replace('&', '\&').replace('$AND', '&'))
 
 # generate code family trees
@@ -231,7 +232,7 @@ for fam, fam_codes in TREE_MERGED['children'].items():
             r'\begin{tikzpicture}[grow=right,level distance=180pt,scale=1,transform shape]',
             r'\Tree ' + generate_qtree_code(subtree).replace('&', r'\&'),
             r'\end{tikzpicture}' ])
-        with open(f'paper_results/codes_{fam.split(" ")[0]}_{code.replace(" ", "_")}.tex', 'w') as tf:
+        with open(os.path.join(root_dir, 'paper_results', f'codes_{fam.split(" ")[0]}_{code.replace(" ", "_")}.tex'), 'w') as tf:
             tf.write(tikz_code)
 
 # global sunburst summarizing Sec4
@@ -263,7 +264,7 @@ fig = go.Figure(go.Sunburst(labels=results['codes'], parents=results['parents'],
 fig.update_layout(width=PLOT_WIDTH, height=PLOT_WIDTH, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
 fig.add_annotation(x=0.5, y=0.5, text="Opinions and Statements<br>Toward Research Questions", showarrow=False, yshift=40)
 fig.show()
-fig.write_image(f"paper_results/sum_all.pdf")
+fig.write_image(os.path.join(root_dir, 'paper_results', 'sum_all.pdf'))
 
 # detailed
 # for rq, subtree in TREE_MERGED['children'].items():
@@ -313,19 +314,18 @@ fig.add_shape(type="rect", x0=0, y0=0.5, x1=15, y1=4.5, line=dict(color=LAMARR_C
 fig.add_annotation(text="Authorities", x=16, y=2.5, showarrow=False, textangle=-90)
 fig.update_layout(width=PLOT_WIDTH*0.5, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0}, showlegend=False)
 fig.show()
-fig.write_image("paper_results/q4_trust_reasons.pdf")
+fig.write_image(os.path.join(root_dir, 'paper_results', 'q4_trust_reasons.pdf'))
 
 # Q3 competitors used
 used = {n.replace('Used: ', ''): c['frequency'] + c['sub_frequency'] for n, c in find_tree(TREE_MERGED, 'Workflows and Use')['children'].items() if 'Used' in n or 'Other' in n}
 fig = go.Figure(go.Bar(y=list(used.keys()), x=list(used.values()), orientation='h', marker=dict(color=sample_colorscale(LAM_COL_SCALE, np.linspace(0, 1, len(used))))))
 fig.update_layout(width=PLOT_WIDTH*0.5, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0}, showlegend=False)
 fig.show()
-fig.write_image("paper_results/q3_competitors.pdf")
+fig.write_image(os.path.join(root_dir, 'paper_results', 'q3_competitors.pdf'))
 
 # Q2 benefits VS limitations
 sentiment_codes = ['Benefits', 'Room for Improvements', 'Limitations']
 sentiment_trees = {code: find_tree(TREE, code) for code in sentiment_codes}
-codes_per_id = pd.read_csv('codes_per_id.csv')
 results = []
 for id, data in codes_per_id.groupby('id'):
     counts = {code: 0 for code in sentiment_codes}
@@ -346,7 +346,7 @@ fig.update_layout(barmode='relative', width=PLOT_WIDTH*0.6, height=PLOT_HEIGHT, 
                   yaxis={'title': 'Code Occurrences', 'tick0': -20, 'dtick': 5, 'tickformat': '',
                          'tickvals': [-20, -15, -10, -5, 0, 5, 10, 15, 20], 'ticktext': ['20', "15", '10', "5", '0', "5", '10', "15", '20']})
 fig.show()
-fig.write_image("paper_results/q2_sentiment.pdf")
+fig.write_image(os.path.join(root_dir, 'paper_results', 'q2_sentiment.pdf'))
 
 # Q2 property importance
 codes = {'Energy, Resources & Sustainability': 'Resources', 'Predictive Quality': 'Pred Qual', 'Temporal Performance': 'Temp Perf', 'Consistency & Robustness': 'Robustness'}
@@ -366,7 +366,7 @@ fig.update_layout(barmode='relative', width=PLOT_WIDTH*0.4, height=PLOT_HEIGHT, 
                   yaxis={'title': 'Code Occurrences', 'tick0': -20, 'dtick': 5, 'tickformat': '',
                          'tickvals': [-20, -15, -10, -5, 0, 5, 10, 15, 20], 'ticktext': ['20', "15", '10', "5", '0', "5", '10', "15", '20']})
 fig.show()
-fig.write_image("paper_results/q2_prop_importances.pdf")
+fig.write_image(os.path.join(root_dir, 'paper_results', 'q2_prop_importances.pdf'))
 
 # Q1 figure
 daily_dicts = {}
@@ -382,4 +382,4 @@ for i, (code, dict) in enumerate(daily_dicts.items()):
     )
 fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT*2.0, margin={'l': 0, 'r': 0, 'b': 0, 't': 18}, showlegend=False)
 fig.show()
-fig.write_image("paper_results/q1_bars.pdf")
+fig.write_image(os.path.join(root_dir, 'paper_results', 'paper_results/q1_bars.pdf'))
