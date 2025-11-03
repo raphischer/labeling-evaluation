@@ -49,7 +49,7 @@ Fischer, R., Liebig, T. & Morik, K. Towards More Sustainable and Trustworthy Rep
 #### You can also use the following BibTex entries:
 
 ```bibtex
-@InProceedings{Fischer.etal.2025a,
+@inproceedings{Fischer.etal.2025a,
   author             = {Fischer, Raphael and Wischnewski, Magdalena and van der Staay, Alexander and Poitz, Katharina and Janiesch, Christian and Liebig, Thomas},
   booktitle          = {Proceedings of the AAAI/ACM Conference on AI, Ethics, and Society (AIES)},
   title              = {Bridging the Communication Gap: Evaluating {AI} Labeling Practices for Trustworthy {AI} Development},
@@ -63,7 +63,7 @@ Fischer, R., Liebig, T. & Morik, K. Towards More Sustainable and Trustworthy Rep
 ```
 
 ```bibtex
-@phdthesis{fischer_diss,
+@phdthesis{Fischer.2025b,
   title     = {Advancing the Sustainability of Machine Learning and Artificial Intelligence via Labeling and Meta-Learning},
   author    = {Fischer, Raphael},
   school    = {TU Dortmund University},
@@ -74,7 +74,7 @@ Fischer, R., Liebig, T. & Morik, K. Towards More Sustainable and Trustworthy Rep
 ```
 
 ```bibtex
-@article{fischer_dami,
+@article{Fischer.etal.2024a,
 	title   = {Towards More Sustainable and Trustworthy Reporting in Machine Learning},
 	volume  = {38},
 	issn    = {1573-756X},
