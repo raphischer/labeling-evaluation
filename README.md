@@ -37,52 +37,54 @@ In summary, the AI labels were well-received by participants and received a lot 
 
 ## 📝 Citing
 
-If you appreciate our work, please cite the following literature:
+#### If you appreciate our work, please cite the following literature:
 
-```
-Fischer, R., Wischnewski, M., van der Staay, A., Poitz, K., Janiesch, C. & Liebig, T. Bridging the Communication Gap: Evaluating AI Labeling Practices for Trustworthy AI Development. Proceedings of the Eighth AAAI/ACM Conference on AI, Ethics, and Society (AIES) (2025) (forthcoming). https://doi.org/10.48550/arXiv.2501.11909
+Fischer, R., Wischnewski, M., van der Staay, A., Poitz, K., Janiesch, C. & Liebig, T. Bridging the Communication Gap: Evaluating AI Labeling Practices for Trustworthy AI Development. Proceedings of the Eighth AAAI/ACM Conference on AI, Ethics, and Society (AIES) (2025). https://doi.org/10.1609/aies.v8i1.36601
 
 Fischer, R. Advancing the Sustainability of Machine Learning and Artificial Intelligence via Labeling and Meta-Learning.
 Ph.D. Dissertation, TU Dortmund University (2025). https://doi.org/10.17877/DE290R-25716
 
 Fischer, R., Liebig, T. & Morik, K. Towards More Sustainable and Trustworthy Reporting in Machine Learning. Data Mining and Knowledge Discovery 38, 1909–1928 (2024). https://doi.org/10.1007/s10618-024-01020-3
+
+#### You can also use the following BibTex entries:
+
+```bibtex
+@InProceedings{Fischer.etal.2025a,
+  author             = {Fischer, Raphael and Wischnewski, Magdalena and van der Staay, Alexander and Poitz, Katharina and Janiesch, Christian and Liebig, Thomas},
+  booktitle          = {Proceedings of the AAAI/ACM Conference on AI, Ethics, and Society (AIES)},
+  title              = {Bridging the Communication Gap: Evaluating {AI} Labeling Practices for Trustworthy {AI} Development},
+  doi                = {10.1609/aies.v8i1.36601},
+  number             = {1},
+  pages              = {926--939},
+  url                = {https://doi.org/10.1609/aies.v8i1.36601},
+  volume             = {8},
+  year               = {2025},
+}
 ```
 
-
-You can also use the following BibTex entries:
 ```bibtex
-@inproceedings{fischer_interview,
-author = {Raphael Fischer and Magdalena Wischnewski and Alexander van der Staay and Katharina Poitz and Christian Janiesch and Thomas Liebig},
-title = {Bridging the Communication Gap: Evaluating AI Labeling Practices for Trustworthy AI Development},
-year = {2025},
-publisher = {AAAI Press},
-booktitle = {Proceedings of the Eighth AAAI/ACM Conference on AI, Ethics, and Society},
-series = {AIES '25},
-note = {(forthcoming)},
-url = {https://arxiv.org/abs/2501.11909},
-doi = {10.48550/arXiv.2501.11909},
-}
-
 @phdthesis{fischer_diss,
-  title={Advancing the Sustainability of Machine Learning and Artificial Intelligence via Labeling and Meta-Learning},
-  author={Fischer, Raphael},
-  school={TU Dortmund University},
-  url={http://doi.org/10.17877/DE290R-25716},
-  doi={10.17877/DE290R-25716},
-  year={2025}
+  title     = {Advancing the Sustainability of Machine Learning and Artificial Intelligence via Labeling and Meta-Learning},
+  author    = {Fischer, Raphael},
+  school    = {TU Dortmund University},
+  url       = {http://doi.org/10.17877/DE290R-25716},
+  doi       = {10.17877/DE290R-25716},
+  year      = {2025}
 }
+```
 
+```bibtex
 @article{fischer_dami,
-	title = {Towards More Sustainable and Trustworthy Reporting in Machine Learning},
-	volume = {38},
-	issn = {1573-756X},
-	url = {https://doi.org/10.1007/s10618-024-01020-3},
-	doi = {10.1007/s10618-024-01020-3},
-	number = {4},
+	title   = {Towards More Sustainable and Trustworthy Reporting in Machine Learning},
+	volume  = {38},
+	issn    = {1573-756X},
+	url     = {https://doi.org/10.1007/s10618-024-01020-3},
+	doi     = {10.1007/s10618-024-01020-3},
+	number  = {4},
 	journal = {Data Mining and Knowledge Discovery},
-	author = {Fischer, Raphael and Liebig, Thomas and Morik, Katharina},
-	year = {2024},
-	pages = {1909--1928},
+	author  = {Fischer, Raphael and Liebig, Thomas and Morik, Katharina},
+	year    = {2024},
+	pages   = {1909--1928},
 }
 ```
 
